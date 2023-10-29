@@ -1,11 +1,11 @@
-version: '3'
+version: "3"
+
 services:
   impala:
     build: .
     ports:
-      - "21000:21000"
-      - "21050:21050"
-      - "22000:22000"
-      - "25000:25000"
-      - "25010:25010"
-      - "25020:25020"
+      - "21000:21000" # Impala Shell for user interactions
+      - "21050:21050" # Impala JDBC for Java-based applications
+      - "25000:25000" # Impala Web UI for monitoring and managing queries
+      - "25010:25010" # StateStore Web UI for cluster state management
+      - "25020:25020" # Catalog Web UI for metadata and schema management

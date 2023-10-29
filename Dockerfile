@@ -1,58 +1,40 @@
+# Use Ubuntu 20.04 as the base image
 FROM ubuntu:20.04
-# source: https://medium.com/@deepak7093/apache-impala-installation-4d6ed1862dfa
-# Note that if you update Debian, you'll also need to figure out which openjdk
-# you need for your new version
 
-#  Environment variables
-ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 \
-    IMPALA_HOME=/etc/Impala
+# Disable interactive install prompts
+ARG DEBIAN_FRONTEND=noninteractive
 
-# Install dependencies
-RUN apt-get update && \
+# Install prerequisites
+RUN apt-get update -y && \
     apt-get install -y \
     autoconf \
     automake \
-    bison \
     build-essential \
     cmake \
+    g++ \
+    gcc \
     git \
-    libkrb5-dev \
-    libncurses-dev \
-    libpython3-dev \
-    libsasl2-dev \
-    libsasl2-dev \
-    libssl-dev \
     libtool \
-    libz-dev \
-    maven \
-    ntp \
-    openjdk-17-jdk \
-    openssh-server \
-    postgresql \
-    wget
+    lsb-release \
+    sudo
 
-# Setup PostgreSQL and SSH
-RUN service postgresql start && \
-    service ssh start && \
-    ssh-keygen -t dsa -f ~/.ssh/id_dsa -N "" && \
-    cat ~/.ssh/id_dsa.pub >> ~/.ssh/authorized_keys
+# Clone the Impala repository for tag 4.3.0
+RUN git clone --branch 4.3.0 https://github.com/apache/impala.git ~/Impala
 
-# Clone and build the native toolchain and Impala
-# RUN git clone --depth=1 https://github.com/cloudera/native-toolchain.git && \
-#     cd /native-toolchain && \
-#     ./buildall.sh
-RUN cd /etc && \
-    git clone --depth=1 https://github.com/apache/impala.git Impala && \
-    cd /etc/Impala && \
-    ./buildall.sh -noclean -notests -skiptests
+# Set the IMPALA_HOME environment variable
+ENV IMPALA_HOME /root/Impala
+
+# Run the bootstrap scripts
+WORKDIR $IMPALA_HOME
+RUN ./bin/bootstrap_development.sh
 
 # Expose Impala ports
-EXPOSE 21000 21050 22000 25000 25010 25020
+# 21000: Impala Shell for user interactions
+# 21050: Impala JDBC for Java-based applications
+# 25000: Impala Web UI for monitoring and managing queries
+# 25010: StateStore Web UI for cluster state management
+# 25020: Catalog Web UI for metadata and schema management
+EXPOSE 21000 21050 25000 25010 25020
 
-# Add start script
-WORKDIR /app
-COPY start-impala.sh /start-impala.sh
-RUN chmod +x /start-impala.sh
-
-# Start Impala
-CMD ["./start-impala.sh"]
+# Format the test cluster and start Impala and dependent services
+CMD ["./buildall.sh", "-noclean", "-notests", "-format", "-start_minicluster", "-start_impala_cluster"]
