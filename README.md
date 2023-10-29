@@ -89,7 +89,7 @@ impyla uses the [pytest][pytest] toolchain, and depends on the following
 environment variables:
 
 ```bash
-export IMPYLA_TEST_HOST=your.impalad.com
+export IMPYLA_TEST_HOST=quickstart.cloudera
 export IMPYLA_TEST_PORT=21050
 export IMPYLA_TEST_AUTH_MECH=NOSASL
 ```
